@@ -1,116 +1,158 @@
+import java.util.Iterator;
+
 /**
- * Created by Ben on 03/02/2015.
+ * Created by scotp on 22/01/15.
+ * Edited by Ben Higgs for Assignment 2 task 1
  */
-public class MyArrayList{
-    protected static Object[] ArrayList;
-    protected static  int size=0;
+public class MyArrayList implements Iterable{
+    public static final int DEFAULT_SIZE = 5;
+    public static final int EXPANSION = 5;
+    private int capacity;
+    private int size;
+    private Object[] items;
 
     public MyArrayList() {
-       ArrayList = new Object[5];
+        size = 0;
+        capacity = DEFAULT_SIZE;
+        items = new Object[DEFAULT_SIZE];
     }
 
-    public static void add(Object o){
-        if (ArrayList.length==size){
-            incrementLength();
-            ArrayList[size]=o;
-            size++;
+    public Iterator iterator() {
+        return new Itrerate();
+    }
+
+    private class Itrerate implements Iterator  {
+        int cur = 0; int prev = -1;
+
+         public boolean hasNext() {
+             if(cur >= size){
+                 return false;
+             }
+             else{
+                return true;
+             }
         }
-        else{
-            for (int i=0;i<ArrayList.length;i++) {
-                if (ArrayList[i] == null) {
-                    ArrayList[i] = o;
-                    size++;
-                    break;
-                }
+
+        public Object next() {
+            try{
+                indexcheck(cur);
+                prev = cur;
+                cur++;
+                return items[prev];
+            }
+            catch(IndexOutOfBoundsException ex){
+                System.out.println(ex);
+                return null;
             }
         }
 
+        public void remove() {
+        }
     }
 
-    public static void incrementLength(){
-        Object[] newarray=new Object[ArrayList.length+1];
-        for (int i=0;i<ArrayList.length;i++){newarray[i]=ArrayList[i];}
-        ArrayList=newarray.clone();
+    public void indexcheck(int index){
+        if (index >= size || index < 0 ){
+            throw new IndexOutOfBoundsException("Index position does not exist");
+        }
     }
 
-    public static int size(){
+    public String printexception(int index,String function){
+        return("The index "+index+" does not exist, the function "+function+" will not function properly.");
+    }
+
+    private void expand() {
+        Object[] newItems = new Object[capacity + EXPANSION];
+        for (int j = 0; j < size; j++) newItems[j] = items[j];
+        items = newItems;
+        capacity = capacity + EXPANSION;
+    }
+
+    public void add(Object obj) {
+        if (size >= capacity) this.expand();
+        items[size] = obj;
+        size++;
+    }
+
+    public int size() {
         return size;
     }
 
-    public static Object get(int index){
-        return ArrayList[index];
+    public Object get(int index) throws IndexOutOfBoundsException{
+       try{
+           indexcheck(index);
+           return items[index];
+       }
+       catch(IndexOutOfBoundsException ex){
+           throw new IndexOutOfBoundsException(printexception(index,"MyArrayList.get"));
+       }
+
     }
 
-    public static boolean contains (Object o){
-        boolean pos=false;
-        for (int i=0;i<ArrayList.length;i++){
-            if (ArrayList[i]==o){
-                pos=true;
+    public boolean contains(Object obj) {
+        for (int j = 0; j < size; j++) {
+            if (obj.equals(this.get(j))) return true;
+        }
+        return false;
+    }
+
+    public void add(int index, Object obj) {
+        try{
+            indexcheck(index);
+            if (size >= capacity) this.expand();
+            for (int j = size; j > index; j--) items[j] = items[j - 1];
+            items[index] = obj;
+            size++;
+        }
+        catch(IndexOutOfBoundsException ex){
+            throw new IndexOutOfBoundsException(printexception(index,"MyArrayList.add"));
+        }
+
+    }
+
+    public int indexOf(Object obj) {
+        for (int j = 0; j < size; j++) {
+            if (obj.equals(this.get(j))) return j;
+        }
+        return -1;
+    }
+
+    public boolean remove(Object obj) {
+        for (int j = 0; j < size; j++) {
+            if (obj.equals(this.get(j))) {
+                for (int k = j; k < size-1; k++) items[k] = items[k + 1];
+                items[size] = null;
+                size--;
+                return true;
             }
         }
-        return pos;
+        return false;
     }
 
-    public static void set(int index, Object o){
-        ArrayList[index] = o;
-        size++;
-    }
-
-    public static int indexOf(Object o){
-        int pos=-1;
-        for (int i=0;i<ArrayList.length;i++){
-            if (ArrayList[i]==o){
-                pos = i;
-            }
-        }
-        return pos;
-    }
-
-    public static void add (int index, Object o){
-        Object[] old=ArrayList.clone();
-        ArrayList = new Object[size+1];
-        for (int i=0;i<index;i++){
-            ArrayList[i]=old[i];
-        }
-        ArrayList[index]=o;
-        for (int i=index;i<old.length;i++){
-            ArrayList[i+1]=old[i];
-        }
-        size++;
-    }
-
-    public static boolean remove(Object o){
-        boolean del = false;
-        int pos=-1;
-        pos= indexOf(o);
-        if (pos!=-1){
-            Object[] old=ArrayList.clone();
-            ArrayList = new Object[size-1];
-            for (int i=0;i<pos;i++){
-                ArrayList[i]=old[i];
-            }
-            for (int i=pos+1;i<old.length;i++){
-                ArrayList[i-1]=old[i];
-            }
-            size--;
-            del=true;
-        }
-        return del;
-        }
-
-    public static Object remove(int index){
-        Object oldthing=ArrayList[index];
-        Object[] old=ArrayList.clone();
-        ArrayList = new Object[size-1];
-        for (int i=0;i<index;i++){
-            ArrayList[i]=old[i];
-        }
-        for (int i=index+1;i<old.length;i++){
-            ArrayList[i-1]=old[i];
-        }
+    public Object remove(int index) {
+        try{
+        indexcheck(index);
+        Object result = this.get(index);
+        for (int k = index; k < size-1; k++) items[k] = items[k + 1];
+        items[size-1] = null;
         size--;
-        return oldthing;
+        return result;
+        }
+        catch(IndexOutOfBoundsException ex){
+            throw new IndexOutOfBoundsException(printexception(index,"MyArrayList.remove"));
+        }
+
     }
 
 
+
+    public void set(int index, Object obj) {
+        try{
+            indexcheck(index);
+            items[index] = obj;
+        }
+        catch(IndexOutOfBoundsException ex){
+            throw new IndexOutOfBoundsException(printexception(index,"MyArrayList.set"));
+        }
+
+    }
 }
